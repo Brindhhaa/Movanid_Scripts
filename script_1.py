@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 
-# Set the path to the Excel file
-excel_file_path = "/Users/brindha/Downloads/movandiData.xlsx"
+# Set the initial value for excel_file_path
+excel_file_path = ""
 
-# Define the available options (column names) for selection
 options = [
     "Bench", "RF freq [Hz]", "Waveform name", "Ambient Temp [deg]", "chip temp [deg]",
     "SG_PowerLevel", "input_loss", "comp_cable_loss", "splitter_loss", "Pin_casc[dBm]",
@@ -19,17 +19,18 @@ options = [
     "MV2650B0_i_ps_6v", "MV2650B0_i_ps_25v", "chip_temp_2650"
 ]
 
-def parse_filter_ranges(filter_ranges):
-    parsed_ranges = []
-    for filter_range in filter_ranges:
-        if "-" in filter_range:
-            # Parse the filter range if it is a range of values
-            start, end = map(int, filter_range.split("-"))
-            parsed_ranges.append(list(range(start, end + 1)))
-        else:
-            # Append the single filter value if it is not a range
-            parsed_ranges.append([int(filter_range)])
-    return parsed_ranges
+from tkinter import filedialog
+
+def openFile():
+    global excel_file_path
+    # Open the file explorer dialog
+    file_paths = filedialog.askopenfilenames(filetypes=[("Excel Files", "*.xlsx; *.xls"), ("CSV Files", "*.csv")])
+    if file_paths:
+        # Extract the first selected file path
+        file_path = file_paths[0]
+        # Update the excel_file_path if a file is selected
+        excel_file_path = file_path
+
 
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
@@ -121,10 +122,13 @@ filter_range_label.pack()
 filter_range_entry = tk.Entry(window)
 filter_range_entry.pack()
 
+# Create the button to open the file
+open_file_button = tk.Button(window, text="Open File", command=openFile)
+open_file_button.pack()
+
 # Create the button to plot the graph
 plot_button = tk.Button(window, text="Plot Graph", command=plotGraph)
 plot_button.pack()
 
 # Start the GUI event loop
 window.mainloop()
-
