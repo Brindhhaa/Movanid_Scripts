@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 
-# Set the initial value for excel_file_path
+# Set the initial value for excel_file
 excel_file_path = ""
 
 options = [
@@ -19,7 +19,17 @@ options = [
     "MV2650B0_i_ps_6v", "MV2650B0_i_ps_25v", "chip_temp_2650"
 ]
 
-from tkinter import filedialog
+def parse_filter_ranges(filter_ranges):
+    parsed_ranges = []
+    for filter_range in filter_ranges:
+        if "-" in filter_range:
+            # Parse the filter range if it is a range of values
+            start, end = map(int, filter_range.split("-"))
+            parsed_ranges.append(list(range(start, end + 1)))
+        else:
+            # Append the single filter value if it is not a range
+            parsed_ranges.append([int(filter_range)])
+    return parsed_ranges
 
 def openFile():
     global excel_file_path
@@ -31,6 +41,9 @@ def openFile():
         # Update the excel_file_path if a file is selected
         excel_file_path = file_path
 
+def setHardcodedPath():
+    global excel_file_path
+    excel_file_path = "/Users/brindha/Downloads/movandiData.xlsx"
 
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
@@ -125,6 +138,10 @@ filter_range_entry.pack()
 # Create the button to open the file
 open_file_button = tk.Button(window, text="Open File", command=openFile)
 open_file_button.pack()
+
+# Create the button to set the hardcoded path
+hardcoded_file_button = tk.Button(window, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
+hardcoded_file_button.pack()
 
 # Create the button to plot the graph
 plot_button = tk.Button(window, text="Plot Graph", command=plotGraph)
