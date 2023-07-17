@@ -49,11 +49,47 @@ def openFile():
 def update_file_label(file_path):
     file_label.config(text=file_path)
 
+def get_selected_sheet():
+    global selected_sheet, columnOptions
+    selected_indices = sheetBox.curselection()
+    if selected_indices:
+        selected_index = selected_indices[0]
+        selected_sheet = sheetBox.get(selected_index)
+        print("Selected sheet:", selected_sheet)
+        columnOptions = get_sheet_columns(selected_sheet)
+        # Update the dropdown menus
+        update_dropdown_menus()
+    else:
+        messagebox.showwarning("Warning", "No sheet selected!")
+    get_sheet_columns(selected_sheet)
+
+
+def update_dropdown_menus():
+    x_dropdown['menu'].delete(0, 'end')
+    y_dropdown['menu'].delete(0, 'end')
+    filter_listbox.delete(0, 'end')
+
+    for option in columnOptions:
+        x_dropdown['menu'].add_command(label=option, command=tk._setit(x_var, option))
+        y_dropdown['menu'].add_command(label=option, command=tk._setit(y_var, option))
+        filter_listbox.insert(tk.END, option)
+
 
 def update_sheet_box(sheet_names):
     sheetBox.delete(0, tk.END)
     for sheet in sheet_names:
         sheetBox.insert(tk.END, sheet)
+
+
+def get_sheet_columns(sheet_name):
+    if excel_file_path and sheet_name:
+        workbook = openpyxl.load_workbook(excel_file_path)
+        sheet = workbook[sheet_name]
+        columnOptions = [cell.value for cell in sheet[1]]
+        workbook.close()
+        return columnOptions
+    return columnOptions
+       
 
 
 
@@ -153,6 +189,9 @@ sheetBox = tk.Listbox(window, selectmode=tk.SINGLE)
 for sheet in sheet_names:
     sheetBox.insert(tk.END, sheet)
 sheetBox.pack()
+
+processSheet = tk.Button(window, text = "Process Selected Sheet", command=get_selected_sheet)
+processSheet.pack()
 
 
 file_label = tk.Label(window, text="No file selected")
