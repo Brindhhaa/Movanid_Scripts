@@ -4,8 +4,10 @@ import numpy as np
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
+import openpyxl
 
-# Set the initial values
+
+# Set the initial value for excel_file
 excel_file_path = ""
 sheet_names = []
 
@@ -33,30 +35,44 @@ def parse_filter_ranges(filter_ranges):
     return parsed_ranges
 
 def openFile():
-    global excel_file_path, sheet_names
-    # Open the file explorer dialog
+    global excel_file_path
     file_paths = filedialog.askopenfilenames(filetypes=[("Excel Files", "*.xlsx; *.xls"), ("CSV Files", "*.csv")])
     if file_paths:
-        # Extract the first selected file path
         file_path = file_paths[0]
-        # Update the excel_file_path if a file is selected
         excel_file_path = file_path
-        # Get the sheet names from the Excel file
-        sheet_names = pd.ExcelFile(excel_file_path).sheet_names()
-        # Update the sheet_dropdown menu
-        sheet_dropdown['menu'].delete(0, 'end')
-        for sheet_name in sheet_names:
-            sheet_dropdown['menu'].add_command(label=sheet_name, command=tk._setit(sheet_dropdown_var, sheet_name))
+        sheet_names = update_sheet_names()
+        update_file_label(excel_file_path)
+        update_sheet_box(sheet_names)
+
+
+
+def update_file_label(file_path):
+    file_label.config(text=file_path)
+
+
+def update_sheet_box(sheet_names):
+    sheetBox.delete(0, tk.END)
+    for sheet in sheet_names:
+        sheetBox.insert(tk.END, sheet)
+
+
 
 def setHardcodedPath():
-    global excel_file_path, sheet_names
+    global excel_file_path
     excel_file_path = "/Users/brindha/Downloads/movandiData.xlsx"
-    # Get the sheet names from the Excel file
-    sheet_names = pd.ExcelFile(excel_file_path).sheet_names()
-    # Update the sheet_dropdown menu
-    sheet_dropdown['menu'].delete(0, 'end')
-    for sheet_name in sheet_names:
-        sheet_dropdown['menu'].add_command(label=sheet_name, command=tk._setit(sheet_dropdown_var, sheet_name))
+    sheet_names = update_sheet_names()
+    update_file_label(excel_file_path)
+    update_sheet_box(sheet_names)
+
+
+def update_sheet_names():
+    if excel_file_path:
+        workbook = openpyxl.load_workbook(excel_file_path)
+        sheet_names = workbook.sheetnames
+        workbook.close()
+        return sheet_names
+    return []
+
 
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
@@ -73,7 +89,7 @@ def plotGraph():
             return
 
         # Read the data from the Excel file
-        df = pd.read_excel(excel_file_path, sheet_name=sheet_dropdown_var.get(), engine="openpyxl")
+        df = pd.read_excel(excel_file_path, sheet_name="EVM", engine="openpyxl")
 
         filtered_dfs = []
         plot_data = []
@@ -123,6 +139,26 @@ def plotGraph():
 # Create the GUI
 window = tk.Tk()
 
+# Create the button to open the file
+open_file_button = tk.Button(window, text="Open File", command=openFile)
+open_file_button.pack()
+
+# Create the button to set the hardcoded path
+hardcoded_file_button = tk.Button(window, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
+hardcoded_file_button.pack()
+
+sheetName = tk.Label(window, text="Select Sheet Name:")
+sheetName.pack()
+sheetBox = tk.Listbox(window, selectmode=tk.SINGLE)
+for sheet in sheet_names:
+    sheetBox.insert(tk.END, sheet)
+sheetBox.pack()
+
+
+file_label = tk.Label(window, text="No file selected")
+file_label.pack()
+
+
 # Create the dropdown menus for x-axis, y-axis, and filter options
 x_label = tk.Label(window, text="xName:")
 x_label.pack()
@@ -148,20 +184,7 @@ filter_range_label.pack()
 filter_range_entry = tk.Entry(window)
 filter_range_entry.pack()
 
-# Create the button to open the file
-open_file_button = tk.Button(window, text="Open File", command=openFile)
-open_file_button.pack()
 
-# Create the button to set the hardcoded path
-hardcoded_file_button = tk.Button(window, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
-hardcoded_file_button.pack()
-
-# Create the dropdown for sheet names
-sheet_label = tk.Label(window, text="Sheet Name:")
-sheet_label.pack()
-sheet_dropdown_var = tk.StringVar(window)
-sheet_dropdown = tk.OptionMenu(window, sheet_dropdown_var, "")
-sheet_dropdown.pack()
 
 # Create the button to plot the graph
 plot_button = tk.Button(window, text="Plot Graph", command=plotGraph)
