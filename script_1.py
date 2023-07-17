@@ -5,8 +5,9 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 
-# Set the initial value for excel_file
+# Set the initial values
 excel_file_path = ""
+sheet_names = []
 
 options = [
     "Bench", "RF freq [Hz]", "Waveform name", "Ambient Temp [deg]", "chip temp [deg]",
@@ -32,7 +33,7 @@ def parse_filter_ranges(filter_ranges):
     return parsed_ranges
 
 def openFile():
-    global excel_file_path
+    global excel_file_path, sheet_names
     # Open the file explorer dialog
     file_paths = filedialog.askopenfilenames(filetypes=[("Excel Files", "*.xlsx; *.xls"), ("CSV Files", "*.csv")])
     if file_paths:
@@ -40,10 +41,22 @@ def openFile():
         file_path = file_paths[0]
         # Update the excel_file_path if a file is selected
         excel_file_path = file_path
+        # Get the sheet names from the Excel file
+        sheet_names = pd.ExcelFile(excel_file_path).sheet_names()
+        # Update the sheet_dropdown menu
+        sheet_dropdown['menu'].delete(0, 'end')
+        for sheet_name in sheet_names:
+            sheet_dropdown['menu'].add_command(label=sheet_name, command=tk._setit(sheet_dropdown_var, sheet_name))
 
 def setHardcodedPath():
-    global excel_file_path
+    global excel_file_path, sheet_names
     excel_file_path = "/Users/brindha/Downloads/movandiData.xlsx"
+    # Get the sheet names from the Excel file
+    sheet_names = pd.ExcelFile(excel_file_path).sheet_names()
+    # Update the sheet_dropdown menu
+    sheet_dropdown['menu'].delete(0, 'end')
+    for sheet_name in sheet_names:
+        sheet_dropdown['menu'].add_command(label=sheet_name, command=tk._setit(sheet_dropdown_var, sheet_name))
 
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
@@ -60,7 +73,7 @@ def plotGraph():
             return
 
         # Read the data from the Excel file
-        df = pd.read_excel(excel_file_path, sheet_name="EVM", engine="openpyxl")
+        df = pd.read_excel(excel_file_path, sheet_name=sheet_dropdown_var.get(), engine="openpyxl")
 
         filtered_dfs = []
         plot_data = []
@@ -142,6 +155,13 @@ open_file_button.pack()
 # Create the button to set the hardcoded path
 hardcoded_file_button = tk.Button(window, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
 hardcoded_file_button.pack()
+
+# Create the dropdown for sheet names
+sheet_label = tk.Label(window, text="Sheet Name:")
+sheet_label.pack()
+sheet_dropdown_var = tk.StringVar(window)
+sheet_dropdown = tk.OptionMenu(window, sheet_dropdown_var, "")
+sheet_dropdown.pack()
 
 # Create the button to plot the graph
 plot_button = tk.Button(window, text="Plot Graph", command=plotGraph)
