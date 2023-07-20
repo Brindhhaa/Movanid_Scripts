@@ -163,7 +163,6 @@ def plotGraph():
         plt.ylabel(yName)
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
-        plt.ylim(0, 60)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         # Display the plot
@@ -171,6 +170,15 @@ def plotGraph():
     else:
         # Display an error message if any of the required fields are not selected
         messagebox.showerror("Error", "Please select all fields.")
+
+    x_start = float(entry_x_start.get())
+    x_end = float(entry_x_end.get())
+    x_spacing = float(entry_x_spacing.get())
+    y_start = float(entry_y_start.get())
+    y_end = float(entry_y_end.get())
+    y_spacing = float(entry_y_spacing.get())
+
+
 
 # Create the GUI
 window = tk.Tk()
@@ -223,6 +231,37 @@ filter_range_label.pack()
 filter_range_entry = tk.Entry(window)
 filter_range_entry.pack()
 
+# Create labels and entry fields for X-axis
+label_x_start = tk.Label(window, text="X-axis starting unit:")
+label_x_start.pack()
+entry_x_start = tk.Entry(window)
+entry_x_start.pack()
+
+label_x_end = tk.Label(window, text="X-axis ending unit:")
+label_x_end.pack()
+entry_x_end = tk.Entry(window)
+entry_x_end.pack()
+
+label_x_spacing = tk.Label(window, text="X-axis spacing:")
+label_x_spacing.pack()
+entry_x_spacing = tk.Entry(window)
+entry_x_spacing.pack()
+
+# Create labels and entry fields for Y-axis
+label_y_start = tk.Label(window, text="Y-axis starting unit:")
+label_y_start.pack()
+entry_y_start = tk.Entry(window)
+entry_y_start.pack()
+
+label_y_end = tk.Label(window, text="Y-axis ending unit:")
+label_y_end.pack()
+entry_y_end = tk.Entry(window)
+entry_y_end.pack()
+
+label_y_spacing = tk.Label(window, text="Y-axis spacing:")
+label_y_spacing.pack()
+entry_y_spacing = tk.Entry(window)
+entry_y_spacing.pack()
 
 
 # Create the button to plot the graph
