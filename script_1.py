@@ -1,15 +1,17 @@
-import pandas as pd
+import tkinter as tk
+from tkinter import messagebox, filedialog, ttk
 import matplotlib.pyplot as plt
 import numpy as np
-import tkinter as tk
-from tkinter import messagebox
-from tkinter import filedialog
+import pandas as pd
 import openpyxl
-
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Set the initial value for excel_file
 excel_file_path = ""
 sheet_names = []
+start = 0
+end = 0
+increment = 0
 
 options = [
     "Bench", "RF freq [Hz]", "Waveform name", "Ambient Temp [deg]", "chip temp [deg]",
@@ -21,6 +23,17 @@ options = [
     "tiaGn", "mxGn", "bias1", "bias2", "bias3", "MV2650B0_gain_idx", "VDD_2650",
     "MV2650B0_i_ps_6v", "MV2650B0_i_ps_25v", "chip_temp_2650"
 ]
+
+# Function to update the graph spacing based on user input
+def update_graph():
+    # Get the values from the entry fields
+    start = float(start_entry.get())
+    end = float(end_entry.get())
+    increment = float(spacing_entry.get())
+
+    # Generate x-axis values using numpy's arange function
+    plt.xticks(np.arange(start, end, increment))
+    fig.canvas.draw()
 
 def parse_filter_ranges(filter_ranges):
     parsed_ranges = []
@@ -44,8 +57,6 @@ def openFile():
         update_file_label(excel_file_path)
         update_sheet_box(sheet_names)
 
-
-
 def update_file_label(file_path):
     file_label.config(text=file_path)
 
@@ -61,8 +72,6 @@ def get_selected_sheet():
         update_dropdown_menus()
     else:
         messagebox.showwarning("Warning", "No sheet selected!")
-    get_sheet_columns(selected_sheet)
-
 
 def update_dropdown_menus():
     x_dropdown['menu'].delete(0, 'end')
@@ -74,12 +83,10 @@ def update_dropdown_menus():
         y_dropdown['menu'].add_command(label=option, command=tk._setit(y_var, option))
         filter_listbox.insert(tk.END, option)
 
-
 def update_sheet_box(sheet_names):
     sheetBox.delete(0, tk.END)
     for sheet in sheet_names:
         sheetBox.insert(tk.END, sheet)
-
 
 def get_sheet_columns(sheet_name):
     if excel_file_path and sheet_name:
@@ -89,9 +96,6 @@ def get_sheet_columns(sheet_name):
         workbook.close()
         return columnOptions
     return columnOptions
-       
-
-
 
 def setHardcodedPath():
     global excel_file_path
@@ -100,7 +104,6 @@ def setHardcodedPath():
     update_file_label(excel_file_path)
     update_sheet_box(sheet_names)
 
-
 def update_sheet_names():
     if excel_file_path:
         workbook = openpyxl.load_workbook(excel_file_path)
@@ -108,7 +111,6 @@ def update_sheet_names():
         workbook.close()
         return sheet_names
     return []
-
 
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
@@ -163,7 +165,22 @@ def plotGraph():
         plt.ylabel(yName)
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
+        plt.ylim(0, 60)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        # Create a Matplotlib canvas
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=scroll_window)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Update the scrollable window to include the canvas
+        canvas_width = canvas.get_tk_widget().winfo_width()
+        canvas_height = canvas.get_tk_widget().winfo_height()
+        canvas.configure(width=canvas_width, height=canvas_height)
+        canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)
+
+        # Set the scrollable window to the canvas size
+        scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
         # Display the plot
         plt.show()
@@ -171,101 +188,95 @@ def plotGraph():
         # Display an error message if any of the required fields are not selected
         messagebox.showerror("Error", "Please select all fields.")
 
-    x_start = float(entry_x_start.get())
-    x_end = float(entry_x_end.get())
-    x_spacing = float(entry_x_spacing.get())
-    y_start = float(entry_y_start.get())
-    y_end = float(entry_y_end.get())
-    y_spacing = float(entry_y_spacing.get())
-
-
-
 # Create the GUI
 window = tk.Tk()
+window.title("Graph GUI")
+
+# Create a scrollbar
+scrollbar = ttk.Scrollbar(window)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Create a scrollable window
+scroll_window = tk.Canvas(window, yscrollcommand=scrollbar.set)
+scroll_window.pack(fill=tk.BOTH, expand=True)
+
+# Configure the scrollbar to work with the scrollable window
+scrollbar.config(command=scroll_window.yview)
+
+# Create the main frame
+frame = tk.Frame(scroll_window)
+scroll_window.create_window((0, 0), window=frame, anchor=tk.NW)
 
 # Create the button to open the file
-open_file_button = tk.Button(window, text="Open File", command=openFile)
+open_file_button = tk.Button(frame, text="Open File", command=openFile)
 open_file_button.pack()
 
 # Create the button to set the hardcoded path
-hardcoded_file_button = tk.Button(window, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
+hardcoded_file_button = tk.Button(frame, text="Hardcoded Data File (brindha)", command=setHardcodedPath)
 hardcoded_file_button.pack()
 
-sheetName = tk.Label(window, text="Select Sheet Name:")
+sheetName = tk.Label(frame, text="Select Sheet Name:")
 sheetName.pack()
-sheetBox = tk.Listbox(window, selectmode=tk.SINGLE)
+sheetBox = tk.Listbox(frame, selectmode=tk.SINGLE)
 for sheet in sheet_names:
     sheetBox.insert(tk.END, sheet)
 sheetBox.pack()
 
-processSheet = tk.Button(window, text = "Process Selected Sheet", command=get_selected_sheet)
+processSheet = tk.Button(frame, text="Process Selected Sheet", command=get_selected_sheet)
 processSheet.pack()
 
-
-file_label = tk.Label(window, text="No file selected")
+file_label = tk.Label(frame, text="No file selected")
 file_label.pack()
 
-
 # Create the dropdown menus for x-axis, y-axis, and filter options
-x_label = tk.Label(window, text="xName:")
+x_label = tk.Label(frame, text="xName:")
 x_label.pack()
-x_var = tk.StringVar(window)
-x_dropdown = tk.OptionMenu(window, x_var, *options)
+x_var = tk.StringVar(frame)
+x_dropdown = tk.OptionMenu(frame, x_var, *options)
 x_dropdown.pack()
 
-y_label = tk.Label(window, text="yName:")
+y_label = tk.Label(frame, text="yName:")
 y_label.pack()
-y_var = tk.StringVar(window)
-y_dropdown = tk.OptionMenu(window, y_var, *options)
+y_var = tk.StringVar(frame)
+y_dropdown = tk.OptionMenu(frame, y_var, *options)
 y_dropdown.pack()
 
-filter_label = tk.Label(window, text="filterName:")
+filter_label = tk.Label(frame, text="filterName:")
 filter_label.pack()
-filter_listbox = tk.Listbox(window, selectmode=tk.MULTIPLE)
+filter_listbox = tk.Listbox(frame, selectmode=tk.MULTIPLE)
 for option in options:
     filter_listbox.insert(tk.END, option)
 filter_listbox.pack()
 
-filter_range_label = tk.Label(window, text="filterRanges (comma-separated):")
+filter_range_label = tk.Label(frame, text="filterRanges (comma-separated):")
 filter_range_label.pack()
-filter_range_entry = tk.Entry(window)
+filter_range_entry = tk.Entry(frame)
 filter_range_entry.pack()
 
-# Create labels and entry fields for X-axis
-label_x_start = tk.Label(window, text="X-axis starting unit:")
-label_x_start.pack()
-entry_x_start = tk.Entry(window)
-entry_x_start.pack()
+# Feature to change spacing on graph x-axis
+spacing_frame = tk.Frame(frame)
+spacing_frame.pack()
 
-label_x_end = tk.Label(window, text="X-axis ending unit:")
-label_x_end.pack()
-entry_x_end = tk.Entry(window)
-entry_x_end.pack()
+start_label = tk.Label(spacing_frame, text="Start value:")
+start_label.pack()
+start_entry = tk.Entry(spacing_frame)
+start_entry.pack()
 
-label_x_spacing = tk.Label(window, text="X-axis spacing:")
-label_x_spacing.pack()
-entry_x_spacing = tk.Entry(window)
-entry_x_spacing.pack()
+end_label = tk.Label(spacing_frame, text="End value:")
+end_label.pack()
+end_entry = tk.Entry(spacing_frame)
+end_entry.pack()
 
-# Create labels and entry fields for Y-axis
-label_y_start = tk.Label(window, text="Y-axis starting unit:")
-label_y_start.pack()
-entry_y_start = tk.Entry(window)
-entry_y_start.pack()
+spacing_label = tk.Label(spacing_frame, text="Spacing:")
+spacing_label.pack()
+spacing_entry = tk.Entry(spacing_frame)
+spacing_entry.pack()
 
-label_y_end = tk.Label(window, text="Y-axis ending unit:")
-label_y_end.pack()
-entry_y_end = tk.Entry(window)
-entry_y_end.pack()
-
-label_y_spacing = tk.Label(window, text="Y-axis spacing:")
-label_y_spacing.pack()
-entry_y_spacing = tk.Entry(window)
-entry_y_spacing.pack()
-
+update_button = tk.Button(spacing_frame, text="Apply Spacing", command=update_graph)
+update_button.pack()
 
 # Create the button to plot the graph
-plot_button = tk.Button(window, text="Plot Graph", command=plotGraph)
+plot_button = tk.Button(frame, text="Plot Graph", command=plotGraph)
 plot_button.pack()
 
 # Start the GUI event loop
