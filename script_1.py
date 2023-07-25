@@ -24,16 +24,7 @@ options = [
     "MV2650B0_i_ps_6v", "MV2650B0_i_ps_25v", "chip_temp_2650"
 ]
 
-# Function to update the graph spacing based on user input
-def update_graph():
-    # Get the values from the entry fields
-    start = float(start_entry.get())
-    end = float(end_entry.get())
-    increment = float(spacing_entry.get())
 
-    # Generate x-axis values using numpy's arange function
-    plt.xticks(np.arange(start, end, increment))
-    fig.canvas.draw()
 
 def parse_filter_ranges(filter_ranges):
     parsed_ranges = []
@@ -112,6 +103,42 @@ def update_sheet_names():
         return sheet_names
     return []
 
+def spacing_list(start, end, increment):
+    integer_list = []
+        
+    if (increment > 0):
+        # If the increment is positive, create a list in increasing order
+        current_value = start
+        while current_value <= end:
+            integer_list.append(current_value)
+            current_value += increment
+    elif (increment < 0):
+        # If the increment is negative, create a list in decreasing order
+        current_value = start
+        while current_value >= end:
+            integer_list.append(current_value)
+            current_value += increment
+    else:
+        # If the increment is zero, return an empty list
+        return []
+
+    return integer_list
+
+
+def string_to_int(intList):
+    string_list = []
+
+    # Iterate through each integer in the input list
+    for num in intList:
+        string_list.append(str(num))
+
+    return string_list
+
+
+
+
+    
+
 def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
     xName = x_var.get()
@@ -136,27 +163,34 @@ def plotGraph():
         # Iterate over the selected filter indices and their corresponding filter ranges
         for filterIndex, filterRange in zip(filterIndices, filterRanges):
             filter_dfs = []
-            filter_legend_labels = []  # Separate list for legend labels per filter range
+            legend_labels= []  # Separate list for legend labels per filter range
             for filter_value in filterRange:
                 # Filter the dataframe based on the selected filter index and value
+                print(f"the filter value is {filter_value}")
                 filtered_df = df[df[options[filterIndex]] == filter_value]
                 filter_dfs.append(filtered_df)
-                filter_legend_labels.append(f"{options[filterIndex]} = {filter_value}")
+                print(f"the filter value being appended is {filter_value}")
+                legend_labels.append(filter_value )
+                print(f"the legend labels contains {legend_labels}")
+                # filter_legend_labels.append(f"{options[filterIndex]} = {filter_value}")
 
+         
             filtered_dfs.append(filter_dfs)
-            legend_labels.extend(filter_legend_labels)
+        print(f"********************************************* LEGEND LABELS {legend_labels}")
 
         # Create a new figure for each plot
         plt.figure()
-
+        print(legend_labels)
+        print(filtered_dfs)
         # Plot the data for each filtered dataframe
         for filter_dfs, label in zip(filtered_dfs, legend_labels):
-            for filtered_df in filter_dfs:
+            for filtered_df in filter_dfs: 
                 # Extract the selected x-axis and y-axis data
                 new_df = filtered_df[[xName, yName]]
                 xpoints = new_df[xName].values
                 ypoints = new_df[yName].values
                 plot_data.append((xpoints, ypoints))
+                print(label)
                 plt.plot(xpoints, ypoints, label=label)
                 plt.grid(True)  # Add gridlines
 
@@ -165,7 +199,7 @@ def plotGraph():
         plt.ylabel(yName)
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
-        plt.ylim(0, 60)
+    
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         # Create a Matplotlib canvas
@@ -176,17 +210,42 @@ def plotGraph():
         # Update the scrollable window to include the canvas
         canvas_width = canvas.get_tk_widget().winfo_width()
         canvas_height = canvas.get_tk_widget().winfo_height()
-        canvas.configure(width=canvas_width, height=canvas_height)
+        canvas.get_tk_widget().configure(width=canvas_width, height=canvas_height)
+       #canvas.configure(width=canvas_width, height=canvas_height)
         canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)
 
         # Set the scrollable window to the canvas size
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
+        plt.autoscale(False, tight=False)
+        x_start = x_start_entry.get()
+        x_end = x_end_entry.get()
+        x_spacing = x_spacing_entry.get()
+
+        y_start = y_start_entry.get()
+        y_end = y_end_entry.get()
+        y_spacing = y_spacing_entry.get()
+
+
+        x_tick_list = spacing_list(x_start, x_end, x_spacing)
+        x_tick_labels = string_to_int(x_tick_list)
+        y_tick_list = spacing_list(y_start, y_end, y_spacing)
+        y_tick_label = string_to_int(y_tick_list)
+        plt.xticks(x_tick_list, x_tick_labels)
+        plt.yticks(y_tick_list, y_tick_label)
+        plt.xlim([x_start, x_end])
+        plt.ylim([y_start, y_end])
+
         # Display the plot
         plt.show()
+
+
     else:
         # Display an error message if any of the required fields are not selected
         messagebox.showerror("Error", "Please select all fields.")
+
+
+
 
 # Create the GUI
 window = tk.Tk()
@@ -253,27 +312,37 @@ filter_range_label.pack()
 filter_range_entry = tk.Entry(frame)
 filter_range_entry.pack()
 
-# Feature to change spacing on graph x-axis
-spacing_frame = tk.Frame(frame)
-spacing_frame.pack()
+#Customize spacing
+x_start_label = tk.Label(frame, text = "X-axis Starting Value")
+x_start_label.pack()
+x_start_entry = tk.Entry(frame)
+x_start_entry.pack()
 
-start_label = tk.Label(spacing_frame, text="Start value:")
-start_label.pack()
-start_entry = tk.Entry(spacing_frame)
-start_entry.pack()
+x_end_label = tk.Label(frame, text = "X-axis Ending Value")
+x_end_label.pack()
+x_end_entry = tk.Entry(frame)
+x_end_entry.pack()
 
-end_label = tk.Label(spacing_frame, text="End value:")
-end_label.pack()
-end_entry = tk.Entry(spacing_frame)
-end_entry.pack()
+x_spacing_label = tk.Label(frame, text = "X-axis spacing")
+x_spacing_label.pack()
+x_spacing_entry = tk.Entry(frame, text = "X-axis spacing")
+x_spacing_entry.pack()
 
-spacing_label = tk.Label(spacing_frame, text="Spacing:")
-spacing_label.pack()
-spacing_entry = tk.Entry(spacing_frame)
-spacing_entry.pack()
+y_start_label = tk.Label(frame, text = "Y-axis Starting Value")
+y_start_label.pack()
+y_start_entry = tk.Entry(frame)
+y_start_entry.pack()
 
-update_button = tk.Button(spacing_frame, text="Apply Spacing", command=update_graph)
-update_button.pack()
+y_end_label = tk.Label(frame, text = "Y-axis Ending Value")
+y_end_label.pack()
+y_end_entry = tk.Entry(frame)
+y_end_entry.pack()
+
+y_spacing_label = tk.Label(frame, text = "Y-axis spacing")
+y_spacing_label.pack()
+y_spacing_entry = tk.Entry(frame, text = "Y-axis spacing")
+y_spacing_entry.pack()
+
 
 # Create the button to plot the graph
 plot_button = tk.Button(frame, text="Plot Graph", command=plotGraph)
