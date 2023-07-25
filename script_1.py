@@ -105,19 +105,21 @@ def update_sheet_names():
 
 def spacing_list(start, end, increment):
     integer_list = []
-        
-    if (increment > 0):
-        # If the increment is positive, create a list in increasing order
-        current_value = start
-        while current_value <= end:
+    current_value = start
+
+    if(start > end): 
+        currrent_value = start
+        while (current_value >= end):
             integer_list.append(current_value)
-            current_value += increment
-    elif (increment < 0):
-        # If the increment is negative, create a list in decreasing order
+            current_value -= increment
+        return integer_list
+
+    elif (start < end):
         current_value = start
-        while current_value >= end:
-            integer_list.append(current_value)
-            current_value += increment
+        while (current_value >= end):
+                integer_list.append(current_value)
+                current_value += increment
+        return integer_list
     else:
         # If the increment is zero, return an empty list
         return []
@@ -185,7 +187,7 @@ def plotGraph():
         # Plot the data for each filtered dataframe
         for filter_dfs, label in zip(filtered_dfs, legend_labels):
             for filtered_df in filter_dfs: 
-                # Extract the selected x-axis and y-axis data
+                # Extract the selected x-axis and y-axis data from each elemet of filtered_dfs
                 new_df = filtered_df[[xName, yName]]
                 xpoints = new_df[xName].values
                 ypoints = new_df[yName].values
@@ -218,13 +220,13 @@ def plotGraph():
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
         plt.autoscale(False, tight=False)
-        x_start = x_start_entry.get()
-        x_end = x_end_entry.get()
-        x_spacing = x_spacing_entry.get()
+        x_start = int(x_start_entry.get())
+        x_end = int(x_end_entry.get())
+        x_spacing = int(x_spacing_entry.get())
 
-        y_start = y_start_entry.get()
-        y_end = y_end_entry.get()
-        y_spacing = y_spacing_entry.get()
+        y_start = int(y_start_entry.get())
+        y_end = int(y_end_entry.get())
+        y_spacing = int(y_spacing_entry.get())
 
 
         x_tick_list = spacing_list(x_start, x_end, x_spacing)
