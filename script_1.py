@@ -116,7 +116,7 @@ def spacing_list(start, end, increment):
 
     elif (start < end):
         current_value = start
-        while (current_value >= end):
+        while (current_value <= end):
                 integer_list.append(current_value)
                 current_value += increment
         return integer_list
@@ -187,7 +187,7 @@ def plotGraph():
         # Plot the data for each filtered dataframe
         for filter_dfs, label in zip(filtered_dfs, legend_labels):
             for filtered_df in filter_dfs: 
-                # Extract the selected x-axis and y-axis data from each elemet of filtered_dfs
+                # Extract the selected x-axis and y-axis data
                 new_df = filtered_df[[xName, yName]]
                 xpoints = new_df[xName].values
                 ypoints = new_df[yName].values
@@ -220,23 +220,37 @@ def plotGraph():
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
         plt.autoscale(False, tight=False)
+
+        y_start =int(y_start_entry.get())
+        y_end = int(y_end_entry.get())
+        y_spacing = int(y_spacing_entry.get())
+
         x_start = int(x_start_entry.get())
         x_end = int(x_end_entry.get())
         x_spacing = int(x_spacing_entry.get())
 
-        y_start = int(y_start_entry.get())
-        y_end = int(y_end_entry.get())
-        y_spacing = int(y_spacing_entry.get())
 
+        y_tick_list = spacing_list(y_start, y_end, y_spacing)
+        y_tick_list.sort(reverse = False)
+        y_tick_label = string_to_int(y_tick_list)
 
         x_tick_list = spacing_list(x_start, x_end, x_spacing)
+        x_tick_list.sort(reverse = False)
         x_tick_labels = string_to_int(x_tick_list)
-        y_tick_list = spacing_list(y_start, y_end, y_spacing)
-        y_tick_label = string_to_int(y_tick_list)
+
+
         plt.xticks(x_tick_list, x_tick_labels)
         plt.yticks(y_tick_list, y_tick_label)
-        plt.xlim([x_start, x_end])
-        plt.ylim([y_start, y_end])
+
+        if(x_start > x_end):
+            plt.xlim([-20, 5])
+        else:
+            plt.xlim([-20, 5])
+        
+        if(y_start > y_end):
+            plt.ylim([y_end, y_start])
+        else:
+            plt.ylim([y_start, y_end])
 
         # Display the plot
         plt.show()
