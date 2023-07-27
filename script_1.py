@@ -208,17 +208,6 @@ def plotGraph():
     
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-        # Create a Matplotlib canvas
-        canvas = FigureCanvasTkAgg(plt.gcf(), master=scroll_window)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        # Update the scrollable window to include the canvas
-        canvas_width = canvas.get_tk_widget().winfo_width()
-        canvas_height = canvas.get_tk_widget().winfo_height()
-        canvas.get_tk_widget().configure(width=canvas_width, height=canvas_height)
-       #canvas.configure(width=canvas_width, height=canvas_height)
-        canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)
 
         # Set the scrollable window to the canvas size
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
@@ -257,7 +246,7 @@ def plotGraph():
             plt.ylim([y_start, y_end])
 
         # Display the plot
-        plt.show()
+        plt.show(block = False)
 
 
     else:
@@ -370,3 +359,17 @@ plot_button.pack()
 
 # Start the GUI event loop
 window.mainloop()
+
+
+
+# Create a Matplotlib canvas
+"""canvas = FigureCanvasTkAgg(plt.gcf(), master=scroll_window)
+canvas.draw()
+canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)"""
+
+# Update the scrollable window to include the canvas
+''' canvas_width = canvas.get_tk_widget().winfo_width()
+canvas_height = canvas.get_tk_widget().winfo_height()
+canvas.get_tk_widget().configure(width=canvas_width, height=canvas_height)
+#canvas.configure(width=canvas_width, height=canvas_height)
+canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)'''
