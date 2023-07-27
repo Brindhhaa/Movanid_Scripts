@@ -136,6 +136,10 @@ def string_to_int(intList):
 
     return string_list
 
+def on_motion(event):
+    # Update the x= and y= values in the plot's title
+    if event.xdata is not None and event.ydata is not None:
+        plt.gca().set_title(f"x={event.xdata:.2f}, y={event.ydata:.2f}")
 
 
 
@@ -246,7 +250,10 @@ def plotGraph():
             plt.ylim([y_start, y_end])
 
         # Display the plot
+        plt.ion()
+        plt.connect('motion_notify_event', on_motion)
         plt.show(block = False)
+        
 
 
     else:
@@ -316,7 +323,7 @@ for option in options:
     filter_listbox.insert(tk.END, option)
 filter_listbox.pack()
 
-filter_range_label = tk.Label(frame, text="filterRanges (comma-separated):")
+filter_range_label = tk.Label(frame, text="filterRanges (range 1, range 2, etc. EX: 1-4, 5-29, ...)")
 filter_range_label.pack()
 filter_range_entry = tk.Entry(frame)
 filter_range_entry.pack()
