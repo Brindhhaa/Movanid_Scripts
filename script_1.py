@@ -183,10 +183,13 @@ def plotGraph():
         # Create a new figure for each plot
         plt.figure()
         print(legend_labels)
-        print(filtered_dfs)
+        i = 0
+    
+        
         # Plot the data for each filtered dataframe
         for filter_dfs, label in zip(filtered_dfs, legend_labels):
             for filtered_df in filter_dfs: 
+                label = legend_labels[i]
                 # Extract the selected x-axis and y-axis data
                 new_df = filtered_df[[xName, yName]]
                 xpoints = new_df[xName].values
@@ -195,6 +198,7 @@ def plotGraph():
                 print(label)
                 plt.plot(xpoints, ypoints, label=label)
                 plt.grid(True)  # Add gridlines
+                i += 1
 
         # Set the x-axis, y-axis labels, title, and formatting options
         plt.xlabel(xName)
@@ -243,9 +247,9 @@ def plotGraph():
         plt.yticks(y_tick_list, y_tick_label)
 
         if(x_start > x_end):
-            plt.xlim([-20, 5])
+            plt.xlim([x_end, x_start])
         else:
-            plt.xlim([-20, 5])
+            plt.xlim([x_start, x_end])
         
         if(y_start > y_end):
             plt.ylim([y_end, y_start])
