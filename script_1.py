@@ -15,15 +15,12 @@ end = 0
 increment = 0
 
 options = [
-    "Bench", "RF freq [Hz]", "Waveform name", "Ambient Temp [deg]", "chip temp [deg]",
-    "SG_PowerLevel", "input_loss", "comp_cable_loss", "splitter_loss", "Pin_casc[dBm]",
-    "pwr_out_raw", "bb_output_loss", "matching_loss", "Pout_casc[dBm]", "Gain[dB]",
-    "EVM b1 compensated[dB]", "EVM b1 uncompensated[dB]", "b1 Frequency error [Hz]",
-    "b1 gain imbalance [dB]", "b1 phase imbalance [deg]", "MV2613_iDC0p9 [mA]",
-    "MV2613_iDC1p8 [mA]", "MV2613_Vdd [V]", "TIA Gain at cal [dB]", "MV2613_bias_idx",
-    "tiaGn", "mxGn", "bias1", "bias2", "bias3", "MV2650B0_gain_idx", "VDD_2650",
-    "MV2650B0_i_ps_6v", "MV2650B0_i_ps_25v", "chip_temp_2650"
+    "Bench"
 ]
+
+columnOptions = ["N/A"]
+global selected_sheet
+selected_sheet = ""
 
 
 
@@ -78,7 +75,8 @@ def update_file_label(file_path):
     file_label.config(text=file_path)
 
 def get_selected_sheet():
-    global selected_sheet, columnOptions
+    global selected_sheet
+    global columnOptions
     selected_indices = sheetBox.curselection()
     if selected_indices:
         selected_index = selected_indices[0]
@@ -109,14 +107,14 @@ def get_sheet_columns(sheet_name):
     if excel_file_path and sheet_name:
         workbook = openpyxl.load_workbook(excel_file_path)
         sheet = workbook[sheet_name]
-        columnOptions = [cell.value for cell in sheet[1]]
+        columnOptions1 = [cell.value for cell in sheet[1]]
         workbook.close()
-        return columnOptions
-    return columnOptions
+        return columnOptions1
+    return columnOptions1
 
 def setHardcodedPath():
     global excel_file_path
-    excel_file_path = "/Users/brindha/Downloads/movandiData.xlsx"
+    excel_file_path = "/Users/brindha/Downloads/movandi2 thing.xlsx"
     sheet_names = update_sheet_names()
     update_file_label(excel_file_path)
     update_sheet_box(sheet_names)
@@ -210,7 +208,7 @@ def plotGraph():
         # Read the data from the Excel file
         masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
         tempMasterDF = masterDF
-        filterNamesList = [options[idx] for idx in filter_listbox.curselection()]
+        filterNamesList = [columnOptions[idx] for idx in filter_listbox.curselection()]
 
         '''for filter_name, filter_range in zip(filterNamesList, filterRangesList):
             masterDF = masterDF[masterDF[filter_name].isin(filter_range)]'''
@@ -423,19 +421,19 @@ file_label.pack()
 x_label = tk.Label(frame, text="xName:")
 x_label.pack()
 x_var = tk.StringVar(frame)
-x_dropdown = tk.OptionMenu(frame, x_var, *options)
+x_dropdown = tk.OptionMenu(frame, x_var, *columnOptions)
 x_dropdown.pack()
 
 y_label = tk.Label(frame, text="yName:")
 y_label.pack()
 y_var = tk.StringVar(frame)
-y_dropdown = tk.OptionMenu(frame, y_var, *options)
+y_dropdown = tk.OptionMenu(frame, y_var, *columnOptions)
 y_dropdown.pack()
 
 filter_label = tk.Label(frame, text="filterName:")
 filter_label.pack()
 filter_listbox = tk.Listbox(frame, selectmode=tk.MULTIPLE)
-for option in options:
+for option in columnOptions:
     filter_listbox.insert(tk.END, option)
 filter_listbox.pack()
 
