@@ -205,6 +205,8 @@ def plotGraph():
         messagebox.showerror("Error", "Number of filter names and ranges should match.")
         return
 
+    if(xName and yName and filterIndices and filterRangesList):
+
         # Read the data from the Excel file
         masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
         tempMasterDF = masterDF
@@ -227,7 +229,7 @@ def plotGraph():
             plt.grid(True)
             plt.plot(xPoints, yPoints, label = label)
 
-       
+        
 
         plot_data = []
         legend_labels = []
@@ -246,7 +248,7 @@ def plotGraph():
                 print(f"the legend labels contains {legend_labels}")
                 # filter_legend_labels.append(f"{options[filterIndex]} = {filter_value}")
 
-         
+            
             filtered_dfs.append(filter_dfs)
         print(f"********************************************* LEGEND LABELS {legend_labels}")
 
@@ -275,7 +277,7 @@ def plotGraph():
         plt.xlabel(xName)
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
-    
+
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 
