@@ -178,18 +178,32 @@ def plotGraph():
     legendLabels = []
     xPoints = []
     yPoints = []
+
+    filterIndices = filter_listbox.curselection()
+
+    if(len(filterIndices) != 0):
+        if(filter_range_entry.get().__eq__("")):
+            messagebox.showerror("Error", "Please enter at least one filter range that corresponds to the selected filter name")
+            return
+
+    if(len(filterIndices) == 0):
+        messagebox.showerror("Error", "Please select at least 1 filter name")
+        return
+
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
     xName = x_var.get()
     yName = y_var.get()
     filterRangesList = parse_filter_ranges(filter_range_entry.get().split(","))
-    filterIndices = filter_listbox.curselection()
 
     # Check if all the required fields are selected
-    if xName and yName and filterIndices and filterRangesList:
-        if len(filterIndices) != len(filterRangesList):
-            # Display an error message if the number of filter names and ranges don't match
-            messagebox.showerror("Error", "Number of filter names and ranges should match.")
-            return
+    if(not (xName and yName)):
+        messagebox.showerror("Error", "Please select both an X-axis name and a Y-axis name")
+        return
+    
+    if len(filterIndices) != len(filterRangesList):
+        # Display an error message if the number of filter names and ranges don't match
+        messagebox.showerror("Error", "Number of filter names and ranges should match.")
+        return
 
         # Read the data from the Excel file
         masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
@@ -210,8 +224,8 @@ def plotGraph():
                 tempMasterDF = tempMasterDF[tempMasterDF[currentFilterName] == currentFilterNum]
             xPoints = tempMasterDF[xName]
             yPoints = tempMasterDF[yName]
+            plt.grid(True)
             plt.plot(xPoints, yPoints, label = label)
-
 
        
 
