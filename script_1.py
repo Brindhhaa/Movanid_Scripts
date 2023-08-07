@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import openpyxl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import itertools
 
 # Set the initial value for excel_file
 excel_file_path = ""
@@ -29,14 +30,39 @@ options = [
 def parse_filter_ranges(filter_ranges):
     parsed_ranges = []
     for filter_range in filter_ranges:
-        if "-" in filter_range:
-            # Parse the filter range if it is a range of values
-            start, end = map(int, filter_range.split("-"))
-            parsed_ranges.append(list(range(start, end + 1)))
+        filter_range = filter_range.strip()  # Remove any leading/trailing spaces
+        if "," in filter_range:
+            # The input contains a comma, check for individual values and lists
+            values = filter_range.split(",")
+            filter_values = []
+            for value in values:
+                if "-" in value:
+                    # Parse the value as a range
+                    start, end = map(int, value.split("-"))
+                    filter_values.extend(range(start, end + 1))
+                elif value.startswith("[") and value.endswith("]"):
+                    # Parse the value as a list
+                    list_values = value[1:-1].split(",")
+                    filter_values.extend(int(v.strip()) for v in list_values)
+                else:
+                    # Parse the value as a single integer
+                    filter_values.append(int(value))
+            parsed_ranges.append(filter_values)
         else:
-            # Append the single filter value if it is not a range
-            parsed_ranges.append([int(filter_range)])
+            # Parse the value as a single integer or list if enclosed in square brackets
+            if "-" in filter_range:
+                # Parse the value as a range
+                start, end = map(int, filter_range.split("-"))
+                parsed_ranges.append(list(range(start, end + 1)))
+            elif filter_range.startswith("[") and filter_range.endswith("]"):
+                # Parse the value as a list
+                list_values = filter_range[1:-1].split(",")
+                parsed_ranges.append([int(value.strip()) for value in list_values])
+            else:
+                # Parse the value as a single integer
+                parsed_ranges.append([int(filter_range)])
     return parsed_ranges
+
 
 def openFile():
     global excel_file_path
@@ -146,28 +172,54 @@ def on_motion(event):
     
 
 def plotGraph():
+    
+    filterNamesList = []
+    combinationList = []
+    legendLabels = []
+    xPoints = []
+    yPoints = []
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
     xName = x_var.get()
     yName = y_var.get()
+    filterRangesList = parse_filter_ranges(filter_range_entry.get().split(","))
     filterIndices = filter_listbox.curselection()
-    filterRanges = parse_filter_ranges(filter_range_entry.get().split(","))
 
     # Check if all the required fields are selected
-    if xName and yName and filterIndices and filterRanges:
-        if len(filterIndices) != len(filterRanges):
+    if xName and yName and filterIndices and filterRangesList:
+        if len(filterIndices) != len(filterRangesList):
             # Display an error message if the number of filter names and ranges don't match
             messagebox.showerror("Error", "Number of filter names and ranges should match.")
             return
 
         # Read the data from the Excel file
-        df = pd.read_excel(excel_file_path, sheet_name="EVM", engine="openpyxl")
+        masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
+        tempMasterDF = masterDF
+        filterNamesList = [options[idx] for idx in filter_listbox.curselection()]
 
-        filtered_dfs = []
+        '''for filter_name, filter_range in zip(filterNamesList, filterRangesList):
+            masterDF = masterDF[masterDF[filter_name].isin(filter_range)]'''
+        
+        for combination in itertools.product(*filterRangesList):
+            combinationList.append(combination)
+            legendLabels.append(combination)
+            print(combination)
+
+        for currentCombo, label in zip(combinationList, legendLabels):
+            tempMasterDF = masterDF
+            for currentFilterNum, currentFilterName in zip(currentCombo, filterNamesList):
+                tempMasterDF = tempMasterDF[tempMasterDF[currentFilterName] == currentFilterNum]
+            xPoints = tempMasterDF[xName]
+            yPoints = tempMasterDF[yName]
+            plt.plot(xPoints, yPoints, label = label)
+
+
+       
+
         plot_data = []
         legend_labels = []
 
         # Iterate over the selected filter indices and their corresponding filter ranges
-        for filterIndex, filterRange in zip(filterIndices, filterRanges):
+        '''for filterIndex, filterRange in zip(filterIndices, filterRanges):
             filter_dfs = []
             legend_labels= []  # Separate list for legend labels per filter range
             for filter_value in filterRange:
@@ -188,8 +240,7 @@ def plotGraph():
         plt.figure()
         print(legend_labels)
         i = 0
-    
-        
+
         # Plot the data for each filtered dataframe
         for filter_dfs, label in zip(filtered_dfs, legend_labels):
             for filtered_df in filter_dfs: 
@@ -203,10 +254,11 @@ def plotGraph():
                 plt.plot(xpoints, ypoints, label=label)
                 plt.grid(True)  # Add gridlines
                 i += 1
-
+        '''
         # Set the x-axis, y-axis labels, title, and formatting options
-        plt.xlabel(xName)
+        
         plt.ylabel(yName)
+        plt.xlabel(xName)
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
     
@@ -216,38 +268,86 @@ def plotGraph():
         # Set the scrollable window to the canvas size
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
-        plt.autoscale(False, tight=False)
-
-        y_start =int(y_start_entry.get())
-        y_end = int(y_end_entry.get())
-        y_spacing = int(y_spacing_entry.get())
-
-        x_start = int(x_start_entry.get())
-        x_end = int(x_end_entry.get())
-        x_spacing = int(x_spacing_entry.get())
 
 
-        y_tick_list = spacing_list(y_start, y_end, y_spacing)
-        y_tick_list.sort(reverse = False)
-        y_tick_label = string_to_int(y_tick_list)
-
-        x_tick_list = spacing_list(x_start, x_end, x_spacing)
-        x_tick_list.sort(reverse = False)
-        x_tick_labels = string_to_int(x_tick_list)
+        if (y_spacing_entry.get()):
+            y_spacing = int(y_spacing_entry.get())
 
 
-        plt.xticks(x_tick_list, x_tick_labels)
-        plt.yticks(y_tick_list, y_tick_label)
+        if (y_start_entry.get() and y_end_entry.get()):
+            plt.autoscale(False, tight=False)
 
-        if(x_start > x_end):
-            plt.xlim([x_end, x_start])
-        else:
-            plt.xlim([x_start, x_end])
+            y_start =int(y_start_entry.get())
+            y_end = int(y_end_entry.get())
+
+            if(y_start > y_end):
+                plt.ylim([y_end, y_start])
+            else:
+                plt.ylim([y_start, y_end])
+
+            if(y_spacing_entry.get()):
+                y_spacing = int(y_spacing_entry.get())
+                y_tick_list = spacing_list(y_start, y_end, y_spacing)
+                y_tick_list.sort(reverse = False)
+                y_tick_label = string_to_int(y_tick_list)
+                plt.yticks(y_tick_list, y_tick_label)
+            else:
+                y_spacing = abs((y_start - y_end)/10)
+                y_tick_list = spacing_list(y_start, y_end, y_spacing)
+                y_tick_list.sort(reverse = False)
+                y_tick_label = string_to_int(y_tick_list)
+                plt.yticks(y_tick_list, y_tick_label)
+
+
+        elif (not y_start_entry.get() and y_end_entry.get()):
+            messagebox.showerror("Error", "If you fill in an ending value for the Y-axis, you must fill a starting value. Another option is to leave both parameters blank and the graph will automatically scale the Y-axis. Please try again")
+            plt.ioff()  # Turn off interactive mode to avoid multiple plot windows
+            plt.close()  # Close the previous plot window
+            return  # This will exit the function and prevent the graph plot from opening
+
+        elif (not y_end_entry.get() and y_start_entry.get()):
+            messagebox.showerror("Error", "If you fill in a starting value for the Y-axis, you must fill an ending value. Another option is to leave both parameters blank and the graph will automatically scale the Y-axis. Please try again")
+            plt.ioff()  # Turn off interactive mode to avoid multiple plot windows
+            plt.close()  # Close the previous plot window
+            return
+
         
-        if(y_start > y_end):
-            plt.ylim([y_end, y_start])
-        else:
-            plt.ylim([y_start, y_end])
+        if (x_start_entry.get() and x_end_entry.get()):
+            plt.autoscale(False, tight=False)
+
+            x_start = int(x_start_entry.get())
+            x_end = int(x_end_entry.get())
+
+            if(x_start > x_end):
+                plt.xlim([x_end, x_start])
+            else:
+                plt.xlim([x_start, x_end])
+
+            if(x_spacing_entry.get()):
+                x_spacing = int(x_spacing_entry.get())
+                x_tick_list = abs(spacing_list(x_start, x_end, x_spacing))
+                x_tick_list.sort(reverse = False)
+                x_tick_labels = string_to_int(x_tick_list)
+                plt.xticks(x_tick_list, x_tick_labels)
+            else:
+                x_spacing = abs((x_start - x_end)/10)
+                x_tick_list = spacing_list(x_start, x_end, x_spacing)
+                x_tick_list.sort(reverse = False)
+                x_tick_labels = string_to_int(x_tick_list)
+                plt.xticks(x_tick_list, x_tick_labels)               
+
+        elif (not x_start_entry.get() and x_end_entry.get()):
+            messagebox.showerror("Error", "If you fill in an ending value for the X-axis, you must fill a starting value. Another option is to leave both parameters blank and the graph will automatically scale the X-axis. Please try again")
+            plt.ioff()  # Turn off interactive mode to avoid multiple plot windows
+            plt.close()  # Close the previous plot window
+            return
+        elif (not x_end_entry.get() and x_start_entry.get()):
+            messagebox.showerror("Error", "If you fill in a starting value for the X-axis, you must fill an ending value. Another option is to leave both parameters blank and the graph will automatically scale the X-axis. Please try again")
+            plt.ioff()  # Turn off interactive mode to avoid multiple plot windows
+            plt.close()  # Close the previous plot window
+            return
+
+
 
         # Display the plot
         plt.ion()
