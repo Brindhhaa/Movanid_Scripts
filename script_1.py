@@ -22,7 +22,10 @@ columnOptions = ["N/A"]
 global selected_sheet
 selected_sheet = ""
 
-
+def validate_input(user_input):
+    valid_chars = set("0123456789-,[]")
+    return all(char in valid_chars for char in user_input)
+    #returns true if all the characters are valid. Returns false if there are funky characters
 
 def parse_filter_ranges(filter_ranges):
     parsed_ranges = []
@@ -171,6 +174,11 @@ def on_motion(event):
 
 def plotGraph():
     
+    if not validate_input(filter_range_entry.get()):
+        messagebox.showerror("Error", "Please enter a valid range.")
+        return
+
+
     filterNamesList = []
     combinationList = []
     legendLabels = []
@@ -227,48 +235,12 @@ def plotGraph():
             plt.grid(True)
             plt.plot(xPoints, yPoints, label = label)
 
-        
+        legendTitle = ",".join(filterNamesList)
+
 
         plot_data = []
         legend_labels = []
 
-        # Iterate over the selected filter indices and their corresponding filter ranges
-        '''for filterIndex, filterRange in zip(filterIndices, filterRanges):
-            filter_dfs = []
-            legend_labels= []  # Separate list for legend labels per filter range
-            for filter_value in filterRange:
-                # Filter the dataframe based on the selected filter index and value
-                print(f"the filter value is {filter_value}")
-                filtered_df = df[df[options[filterIndex]] == filter_value]
-                filter_dfs.append(filtered_df)
-                print(f"the filter value being appended is {filter_value}")
-                legend_labels.append(filter_value )
-                print(f"the legend labels contains {legend_labels}")
-                # filter_legend_labels.append(f"{options[filterIndex]} = {filter_value}")
-
-            
-            filtered_dfs.append(filter_dfs)
-        print(f"********************************************* LEGEND LABELS {legend_labels}")
-
-        # Create a new figure for each plot
-        plt.figure()
-        print(legend_labels)
-        i = 0
-
-        # Plot the data for each filtered dataframe
-        for filter_dfs, label in zip(filtered_dfs, legend_labels):
-            for filtered_df in filter_dfs: 
-                label = legend_labels[i]
-                # Extract the selected x-axis and y-axis data
-                new_df = filtered_df[[xName, yName]]
-                xpoints = new_df[xName].values
-                ypoints = new_df[yName].values
-                plot_data.append((xpoints, ypoints))
-                print(label)
-                plt.plot(xpoints, ypoints, label=label)
-                plt.grid(True)  # Add gridlines
-                i += 1
-        '''
         # Set the x-axis, y-axis labels, title, and formatting options
         
         plt.ylabel(yName)
@@ -276,7 +248,10 @@ def plotGraph():
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
 
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        legend = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        legend.set_title(legendTitle)
+
+
 
 
         # Set the scrollable window to the canvas size
@@ -285,10 +260,21 @@ def plotGraph():
 
 
         if (y_spacing_entry.get()):
-            y_spacing = int(y_spacing_entry.get())
+            if not validate_input(y_spacing_entry.get()):
+                messagebox.showerror("Error", "Please give a valid entry for the step.")
+                return
+            else:
+                y_spacing = int(y_spacing_entry.get())
 
 
         if (y_start_entry.get() and y_end_entry.get()):
+            if not validate_input(y_start_entry.get()):
+                messagebox.showerror("Error", "Please give a valid entry for the y start.")
+                return
+            if not validate_input(y_end_entry.get()):
+                messagebox.showerror("Error", "Please give a valid entry for the y end.")
+                return
+
             plt.autoscale(False, tight=False)
 
             y_start =int(y_start_entry.get())
@@ -325,8 +311,15 @@ def plotGraph():
             plt.close()  # Close the previous plot window
             return
 
-        
+
         if (x_start_entry.get() and x_end_entry.get()):
+            if not validate_input(x_start_entry.get()):
+                messagebox.showerror("Error", "Please give a valid entry for the x start.")
+                return
+            if not validate_input(x_end_entry.get()):
+                messagebox.showerror("Error", "Please give a valid entry for the y start.")
+                return
+
             plt.autoscale(False, tight=False)
 
             x_start = int(x_start_entry.get())
@@ -338,6 +331,10 @@ def plotGraph():
                 plt.xlim([x_start, x_end])
 
             if(x_spacing_entry.get()):
+                if not validate_input(x_spacing_entry.get()):
+                    messagebox.showerror("Error", "Please give a valid entry for the x step.")
+                    return
+
                 x_spacing = int(x_spacing_entry.get())
                 x_tick_list = abs(spacing_list(x_start, x_end, x_spacing))
                 x_tick_list.sort(reverse = False)
@@ -468,9 +465,9 @@ y_end_label.pack()
 y_end_entry = tk.Entry(frame)
 y_end_entry.pack()
 
-y_spacing_label = tk.Label(frame, text = "Y-axis spacing")
+y_spacing_label = tk.Label(frame, text = "Y-axis step")
 y_spacing_label.pack()
-y_spacing_entry = tk.Entry(frame, text = "Y-axis spacing")
+y_spacing_entry = tk.Entry(frame, text = "Y-axis step")
 y_spacing_entry.pack()
 
 
@@ -483,14 +480,3 @@ window.mainloop()
 
 
 
-# Create a Matplotlib canvas
-"""canvas = FigureCanvasTkAgg(plt.gcf(), master=scroll_window)
-canvas.draw()
-canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)"""
-
-# Update the scrollable window to include the canvas
-''' canvas_width = canvas.get_tk_widget().winfo_width()
-canvas_height = canvas.get_tk_widget().winfo_height()
-canvas.get_tk_widget().configure(width=canvas_width, height=canvas_height)
-#canvas.configure(width=canvas_width, height=canvas_height)
-canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)'''
