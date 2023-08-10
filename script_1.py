@@ -30,26 +30,61 @@ def validate_input(user_input):
     return all(char in valid_chars for char in user_input)
     #returns true if all the characters are valid. Returns false if there are funky characters
 
-def parse_filter_ranges(filter_ranges):
-    parsed_ranges = []
-    for filter_range in filter_ranges:
-        filter_range = filter_range.strip()  # Remove any leading/trailing spaces
-        try:
-            if "-" in filter_range:
-                # Parse the value as a range
-                start, end = map(int, filter_range.split("-"))
-                parsed_ranges.append(list(range(start, end + 1)))
-            elif filter_range.startswith("[") and filter_range.endswith("]"):
-                # Parse the value as a list
-                list_values = filter_range[1:-1].split(",")
-                filter_values = [int(value.strip()) for value in list_values]
-                parsed_ranges.append(filter_values)
+# def parse_filter_ranges(filter_ranges):
+#     parsed_ranges = []
+#     for filter_range in filter_ranges:
+#         filter_range = filter_range.strip()  # Remove any leading/trailing spaces
+#         try:
+#             if "-" in filter_range:
+#                 # Parse the value as a range
+#                 start, end = map(int, filter_range.split("-"))
+#                 parsed_ranges.append(list(range(start, end + 1)))
+#             elif filter_range.startswith("[") and filter_range.endswith("]"):
+#                 # Parse the value as a list
+#                 list_values = filter_range[1:-1].split(",")
+#                 filter_values = [int(value.strip()) for value in list_values]
+#                 parsed_ranges.append(filter_values)
+#             else:
+#                 # Parse the value as a single integer
+#                 parsed_ranges.append([int(filter_range)])
+#         except ValueError:
+#             messagebox.showerror("Invalid Input", "Invalid filter value. Please enter a valid integer, range, or list.")
+#     return parsed_ranges
+
+def parse_filter_ranges(input_str):
+    def expand_range(range_str):
+        start, end = map(int, range_str.split("-"))
+        return list(range(start, end + 1))
+
+    result = []
+    elements = input_str.split(", ")
+    try:
+        for element in elements:
+            if element.startswith("[") and element.endswith("]"):
+                result.append([int(x) for x in element[1:-1].split(",")])
+            elif "-" in element:
+                result.append(expand_range(element))
             else:
-                # Parse the value as a single integer
-                parsed_ranges.append([int(filter_range)])
-        except ValueError:
-            messagebox.showerror("Invalid Input", "Invalid filter value. Please enter a valid integer, range, or list.")
-    return parsed_ranges
+                result.append(int(element))
+
+        final_result = []
+        temp_list = []
+
+        for item in result:
+            if isinstance(item, list):
+                if temp_list:
+                    final_result.append(temp_list)
+                    temp_list = []
+                final_result.append(item)
+            else:
+                temp_list.append(int(item))
+
+        if temp_list:
+            final_result.append(temp_list)
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Invalid filter value. Please enter a valid integer, range, or list.")
+
+    return final_result
 
 
 
@@ -152,10 +187,10 @@ def string_to_int(intList):
 
     return string_list
 
-def on_motion(event):
-    # Update the x= and y= values in the plot's title
-    if event.xdata is not None and event.ydata is not None:
-        plt.gca().set_title(f"x={event.xdata:.2f}, y={event.ydata:.2f}")
+# def on_motion(event):
+#     # Update the x= and y= values in the plot's title
+#     if event.xdata is not None and event.ydata is not None:
+#         plt.gca().set_title(f"x={event.xdata:.2f}, y={event.ydata:.2f}")
 
 
 
@@ -184,7 +219,7 @@ def plotGraph():
     # Retrieve the selected x-axis, y-axis, filter indices, and filter ranges
     xName = x_var.get()
     yName = y_var.get()
-    filterRangesList = parse_filter_ranges(filter_range_entry.get().split(","))
+    filterRangesList = parse_filter_ranges(filter_range_entry.get())
 
     # Check if all the required fields are selected
     if(not (xName and yName)):
@@ -242,14 +277,14 @@ def plotGraph():
         # Set the scrollable window to the canvas size
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
-
-        try:
-            y_spacing = int(y_spacing_entry.get())
-        except (ValueError, InvalidFilterInputError):
-            messagebox.showerror("Invalid Input", "Invalid entry for the 'Y-axis step'. Please enter a valid integer.")
-            plt.ioff()
-            plt.close()
-            return
+        if (y_spacing_entry.get()):
+            try:
+                y_spacing = int(y_spacing_entry.get())
+            except (ValueError, InvalidFilterInputError):
+                messagebox.showerror("Invalid Input", "Invalid entry for the 'Y-axis step'. Please enter a valid integer.")
+                plt.ioff()
+                plt.close()
+                return
 
 
         if (y_start_entry.get() and y_end_entry.get()):
@@ -363,7 +398,7 @@ def plotGraph():
 
         # Display the plot
         plt.ion()
-        plt.connect('motion_notify_event', on_motion)
+        #plt.connect('motion_notify_event', on_motion)
         plt.show(block = False)
         
 
@@ -478,6 +513,5 @@ plot_button.pack()
 
 # Start the GUI event loop
 window.mainloop()
-
 
 
