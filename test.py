@@ -1,12 +1,14 @@
-import tkinter as tk
+import matplotlib.pyplot as plt
 
-root = tk.Tk()
+# Sample data
+x_values = [-15, -10, -5, 0, 5, 10, 15]
+y_values = [1, 2, 3, 4, 5, 4, 3]
 
-test = tk.Label(root, text="Red", bg="red", fg="white")
-test.pack(side=tk.BOTTOM)
-test = tk.Label(root, text="Green", bg="green", fg="white")
-test.pack(side=tk.BOTTOM)
-test = tk.Label(root, text="purple", bg="purple", fg="white")
-test.pack(padx=15, pady=20, side=tk.LEFT)
+# Plot the data
+plt.plot(x_values, y_values)
 
-root.mainloop()
+# Set the x-axis range
+plt.xlim([-20, 5])
+
+# Show the plot
+plt.show()

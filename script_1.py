@@ -22,6 +22,9 @@ columnOptions = ["N/A"]
 global selected_sheet
 selected_sheet = ""
 
+class InvalidFilterInputError(Exception):
+    pass
+
 def validate_input(user_input):
     valid_chars = set("0123456789-,[]")
     return all(char in valid_chars for char in user_input)
@@ -31,25 +34,7 @@ def parse_filter_ranges(filter_ranges):
     parsed_ranges = []
     for filter_range in filter_ranges:
         filter_range = filter_range.strip()  # Remove any leading/trailing spaces
-        if "," in filter_range:
-            # The input contains a comma, check for individual values and lists
-            values = filter_range.split(",")
-            filter_values = []
-            for value in values:
-                if "-" in value:
-                    # Parse the value as a range
-                    start, end = map(int, value.split("-"))
-                    filter_values.extend(range(start, end + 1))
-                elif value.startswith("[") and value.endswith("]"):
-                    # Parse the value as a list
-                    list_values = value[1:-1].split(",")
-                    filter_values.extend(int(v.strip()) for v in list_values)
-                else:
-                    # Parse the value as a single integer
-                    filter_values.append(int(value))
-            parsed_ranges.append(filter_values)
-        else:
-            # Parse the value as a single integer or list if enclosed in square brackets
+        try:
             if "-" in filter_range:
                 # Parse the value as a range
                 start, end = map(int, filter_range.split("-"))
@@ -57,11 +42,15 @@ def parse_filter_ranges(filter_ranges):
             elif filter_range.startswith("[") and filter_range.endswith("]"):
                 # Parse the value as a list
                 list_values = filter_range[1:-1].split(",")
-                parsed_ranges.append([int(value.strip()) for value in list_values])
+                filter_values = [int(value.strip()) for value in list_values]
+                parsed_ranges.append(filter_values)
             else:
                 # Parse the value as a single integer
                 parsed_ranges.append([int(filter_range)])
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Invalid filter value. Please enter a valid integer, range, or list.")
     return parsed_ranges
+
 
 
 def openFile():
@@ -174,10 +163,6 @@ def on_motion(event):
 
 def plotGraph():
     
-    if not validate_input(filter_range_entry.get()):
-        messagebox.showerror("Error", "Please enter a valid range.")
-        return
-
 
     filterNamesList = []
     combinationList = []
@@ -258,27 +243,34 @@ def plotGraph():
         scroll_window.configure(scrollregion=scroll_window.bbox(tk.ALL))
 
 
-
-        if (y_spacing_entry.get()):
-            if not validate_input(y_spacing_entry.get()):
-                messagebox.showerror("Error", "Please give a valid entry for the step.")
-                return
-            else:
-                y_spacing = int(y_spacing_entry.get())
+        try:
+            y_spacing = int(y_spacing_entry.get())
+        except (ValueError, InvalidFilterInputError):
+            messagebox.showerror("Invalid Input", "Invalid entry for the 'Y-axis step'. Please enter a valid integer.")
+            plt.ioff()
+            plt.close()
+            return
 
 
         if (y_start_entry.get() and y_end_entry.get()):
-            if not validate_input(y_start_entry.get()):
-                messagebox.showerror("Error", "Please give a valid entry for the y start.")
-                return
-            if not validate_input(y_end_entry.get()):
-                messagebox.showerror("Error", "Please give a valid entry for the y end.")
+
+            try:
+                y_start = int(y_start_entry.get())
+            except (ValueError, InvalidFilterInputError):
+                messagebox.showerror("Invalid Input", "Invalid entry for the 'Y-axis Starting Value'. Please enter a valid integer.")
+                plt.ioff()
+                plt.close()
                 return
 
+            try:
+                y_end = int(y_end_entry.get())
+            except (ValueError, InvalidFilterInputError):
+                messagebox.showerror("Invalid Input", "Invalid entry for the 'Y-axis Ending Value'. Please enter a valid integer.")
+                plt.ioff()
+                plt.close()
+                return
+            
             plt.autoscale(False, tight=False)
-
-            y_start =int(y_start_entry.get())
-            y_end = int(y_end_entry.get())
 
             if(y_start > y_end):
                 plt.ylim([y_end, y_start])
@@ -286,7 +278,6 @@ def plotGraph():
                 plt.ylim([y_start, y_end])
 
             if(y_spacing_entry.get()):
-                y_spacing = int(y_spacing_entry.get())
                 y_tick_list = spacing_list(y_start, y_end, y_spacing)
                 y_tick_list.sort(reverse = False)
                 y_tick_label = string_to_int(y_tick_list)
@@ -313,17 +304,24 @@ def plotGraph():
 
 
         if (x_start_entry.get() and x_end_entry.get()):
-            if not validate_input(x_start_entry.get()):
-                messagebox.showerror("Error", "Please give a valid entry for the x start.")
-                return
-            if not validate_input(x_end_entry.get()):
-                messagebox.showerror("Error", "Please give a valid entry for the y start.")
+
+            try:
+                x_start = int(x_start_entry.get())
+            except (ValueError, InvalidFilterInputError):
+                messagebox.showerror("Invalid Input", "Invalid entry for the 'X-axis Starting Value'. Please enter a valid integer.")
+                plt.ioff()
+                plt.close()
+                return   
+            
+            try:
+                x_end = int(x_end_entry.get())
+            except (ValueError, InvalidFilterInputError):
+                messagebox.showerror("Invalid Input", "Invalid entry for the 'X-axis Ending Value'. Please enter a valid integer.")
+                plt.ioff()
+                plt.close()
                 return
 
             plt.autoscale(False, tight=False)
-
-            x_start = int(x_start_entry.get())
-            x_end = int(x_end_entry.get())
 
             if(x_start > x_end):
                 plt.xlim([x_end, x_start])
@@ -331,12 +329,15 @@ def plotGraph():
                 plt.xlim([x_start, x_end])
 
             if(x_spacing_entry.get()):
-                if not validate_input(x_spacing_entry.get()):
-                    messagebox.showerror("Error", "Please give a valid entry for the x step.")
-                    return
+                try:
+                    x_spacing = int(x_spacing_entry.get())
+                except (ValueError, InvalidFilterInputError):
+                    messagebox.showerror("Invalid Input", "Invalid entry for the 'X-axis Step'. Please enter a valid integer.")
+                    plt.ioff()
+                    plt.close()
+                    return               
 
-                x_spacing = int(x_spacing_entry.get())
-                x_tick_list = abs(spacing_list(x_start, x_end, x_spacing))
+                x_tick_list = (spacing_list(x_start, x_end, x_spacing))
                 x_tick_list.sort(reverse = False)
                 x_tick_labels = string_to_int(x_tick_list)
                 plt.xticks(x_tick_list, x_tick_labels)
@@ -450,9 +451,9 @@ x_end_label.pack()
 x_end_entry = tk.Entry(frame)
 x_end_entry.pack()
 
-x_spacing_label = tk.Label(frame, text = "X-axis spacing")
+x_spacing_label = tk.Label(frame, text = "X-axis step")
 x_spacing_label.pack()
-x_spacing_entry = tk.Entry(frame, text = "X-axis spacing")
+x_spacing_entry = tk.Entry(frame, text = "X-axis step")
 x_spacing_entry.pack()
 
 y_start_label = tk.Label(frame, text = "Y-axis Starting Value")
