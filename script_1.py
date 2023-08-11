@@ -21,6 +21,8 @@ options = [
 columnOptions = ["N/A"]
 global selected_sheet
 selected_sheet = ""
+filterIndices = []
+masterDF = pd.DataFrame()
 
 class InvalidFilterInputError(Exception):
     pass
@@ -55,36 +57,63 @@ def parse_filter_ranges(input_str):
     def expand_range(range_str):
         start, end = map(int, range_str.split("-"))
         return list(range(start, end + 1))
-
+    
+    masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
+    filterIndices = filter_listbox.curselection()
+    index = 0
     result = []
+    listEntryColumnCheck = []
     elements = input_str.split(", ")
-    try:
-        for element in elements:
-            if element.startswith("[") and element.endswith("]"):
+    
+    for element in elements:
+        if element.startswith("[") and element.endswith("]"):
+            try:
                 result.append([int(x) for x in element[1:-1].split(",")])
-            elif "-" in element:
+            except ValueError:
+                listEntryColumnCheck.extend(x for x in element[1:-1].split(","))
+
+                for item in listEntryColumnCheck:
+                    if item in masterDF[columnOptions[filterIndices[index]]].values:
+                        result.append(item)
+                    else:
+                        messagebox.showerror("Invalid Input", "One of the filter values you provided is not found in the excel spreadsheet")
+
+        elif "-" in element:
+            try:
                 result.append(expand_range(element))
-            else:
+            except ValueError:
+                messagebox.showerror("Invalid Input", "Invalid filter range. You may have made a typo. Please enter a valid range")
+
+        else:
+            try:
                 result.append(int(element))
+            except ValueError:
+                if element in masterDF[columnOptions[filterIndices[index]]].values:
+                    result.append([element])
+                else:
+                    messagebox.showerror("Invalid Input", "One of the filter values you provided is not found in the excel spreadsheet")
 
-        final_result = []
-        temp_list = []
 
-        for item in result:
-            if isinstance(item, list):
-                if temp_list:
-                    final_result.append(temp_list)
-                    temp_list = []
-                final_result.append(item)
-            else:
-                temp_list.append(int(item))
+        index += 1
 
-        if temp_list:
-            final_result.append(temp_list)
-    except ValueError:
-        messagebox.showerror("Invalid Input", "Invalid filter value. Please enter a valid integer, range, or list.")
+    #     final_result = []
+    #     temp_list = []
 
-    return final_result
+    #     for item in result:
+    #         if isinstance(item, list):
+    #             if temp_list:
+    #                 final_result.append(temp_list)
+    #                 temp_list = []
+    #             final_result.append(item)
+    #         else:
+    #             temp_list.append(int(item))
+
+    #     if temp_list:
+    #         final_result.append(temp_list)
+    # except ValueError:
+    #     messagebox.showerror("Invalid Input", "Invalid filter value. You may have made a typo. Please enter a valid integer, range, or list.")
+
+    return result
 
 
 
@@ -205,6 +234,7 @@ def plotGraph():
     xPoints = []
     yPoints = []
 
+    masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
     filterIndices = filter_listbox.curselection()
 
     if(len(filterIndices) != 0):
@@ -234,7 +264,6 @@ def plotGraph():
     if(xName and yName and filterIndices and filterRangesList):
 
         # Read the data from the Excel file
-        masterDF = pd.read_excel(excel_file_path, sheet_name= selected_sheet, engine="openpyxl")
         tempMasterDF = masterDF
         filterNamesList = [columnOptions[idx] for idx in filter_listbox.curselection()]
 
