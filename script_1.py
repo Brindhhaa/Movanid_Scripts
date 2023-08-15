@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 import openpyxl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.pyplot import figure
+
+import matplotlib.gridspec as gridspec
 import itertools
 
 # Set the initial value for excel_file
@@ -64,13 +67,13 @@ def parse_filter_ranges(input_str):
     result = []
     listEntryColumnCheck = []
     elements = input_str.split(", ")
-    
+
     for element in elements:
         if element.startswith("[") and element.endswith("]"):
             try:
                 result.append([int(x) for x in element[1:-1].split(",")])
             except ValueError:
-                listEntryColumnCheck.extend(x for x in element[1:-1].split(","))
+                listEntryColumnCheck.extend([x] for x in element[1:-1].split(","))
 
                 for item in listEntryColumnCheck:
                     if item in masterDF[columnOptions[filterIndices[index]]].values:
@@ -86,7 +89,8 @@ def parse_filter_ranges(input_str):
 
         else:
             try:
-                result.append(int(element))
+                elem = int(element)
+                result.append(([elem]))
             except ValueError:
                 if element in masterDF[columnOptions[filterIndices[index]]].values:
                     result.append([element])
@@ -226,7 +230,16 @@ def string_to_int(intList):
     
 
 def plotGraph():
-    
+    #plt.subplots_adjust(left=0.15)
+    #fig = plt.figure()
+    #left_subplot = fig.add_subplot(121)
+    #ax.set_box_aspect(1)
+    # ax.set_adjustable('box')
+    # plt.rcParams['figure.figsize'] = [8, 6]
+    # fig.set_figwidth(8)
+    # fig.set_figheight(6)  
+    figure(figsize=(8,8), dpi=80)
+
 
     filterNamesList = []
     combinationList = []
@@ -255,7 +268,7 @@ def plotGraph():
     if(not (xName and yName)):
         messagebox.showerror("Error", "Please select both an X-axis name and a Y-axis name")
         return
-    
+
     if len(filterIndices) != len(filterRangesList):
         # Display an error message if the number of filter names and ranges don't match
         messagebox.showerror("Error", "Number of filter names and ranges should match.")
@@ -282,7 +295,7 @@ def plotGraph():
             xPoints = tempMasterDF[xName]
             yPoints = tempMasterDF[yName]
             plt.grid(True)
-            plt.plot(xPoints, yPoints, label = label)
+            plt.plot(xPoints, yPoints, marker='o', label = label)
 
         legendTitle = ",".join(filterNamesList)
 
@@ -297,9 +310,11 @@ def plotGraph():
         plt.title("Graph of " + xName + " vs " + yName)
         plt.xticks(rotation='vertical')
 
-        legend = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        legend = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {'size': 10})
+        plt.tight_layout()
+        plt.subplots_adjust(left=0.05, right=0.7)
         legend.set_title(legendTitle)
-
+        
 
 
 
@@ -499,7 +514,7 @@ for option in columnOptions:
     filter_listbox.insert(tk.END, option)
 filter_listbox.pack()
 
-filter_range_label = tk.Label(frame, text="filterRanges (range 1, range 2, etc. EX: 1-4, 5-29, ...)")
+filter_range_label = tk.Label(frame, text="filterRanges (ex: 1-40, b1_1h, 25, [1,4,7], ['b1_1h, b1_2h'])")
 filter_range_label.pack()
 filter_range_entry = tk.Entry(frame)
 filter_range_entry.pack()
